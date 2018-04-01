@@ -13,7 +13,8 @@ int led_pin = 2;
 /**
  * flag state input pin
  * */
-int state_pin = 0;
+int pressureSensors[] = new int {1, 2, 3, 4};
+
 bool last_state = false;
 int blink_interval = 100;
 
@@ -27,8 +28,8 @@ int request_interval = 5000;
 /**
  * Wifi network configuration
  * */
-const char *ssid = "SLT";
-const char *password = "1997ashan";
+const char *ssid = "";
+const char *password = "";
 
 /**
  * Backend host details
@@ -55,7 +56,11 @@ void setup() {
 
     // Setting up pin modes
     pinMode(led_pin, OUTPUT);
-    pinMode(state_pin, INPUT);
+
+    // Setting up pin mode for pressure sensors
+    for(int i = 0; i < pressureSensors.length; i++){
+        pinMode(pressureSensors[i], INPUT);
+    }
 
     // Initialize Serial communication
     Serial.begin(115200);
@@ -65,8 +70,6 @@ void setup() {
 
     //Initializing the web socket connection
     connectWebSocket();
-
-    sendState();
 }
 
 void loop() {
@@ -82,19 +85,6 @@ void loop() {
     }
 
     sendState();
-}
-
-/**
- * Check if the flag exist on the base
- * @return true if the flag exist and false otherwise
- * */
-bool hasFlag() {
-
-    if(digitalRead(state_pin) == HIGH){
-        return true;
-    }
-
-    return false;
 }
 
 /**
@@ -143,8 +133,8 @@ void connectWebSocket(){
 }
 
 /**
- * This method will indicate if flag state
- * using the led
+ * This is the indicator of the network connectivity, the blink status
+ * will be override if connection attempt is failed
  * */
 void indicate() {
 
@@ -170,16 +160,10 @@ void indicate() {
         return;
     }
 
-    if (hasFlag()) {
-        digitalWrite(led_pin, LOW);
-    } else {
-        digitalWrite(led_pin, HIGH);
-    }
-
 }
 
 /**
- * This method will send flag state to the server
+ * Try to reconnect to the wifi network on fail
  * */
 void tryReconnect() {
 
@@ -205,17 +189,34 @@ void sendState(){
 }
 
 /**
+ * Prepare pressure sensors analog voltage read as a JSON array
+ * */
+String prepareData() {
+
+    String json = "[";
+
+    for(int i = 0 ; i < pressureSensors.lenght; i++){
+
+        json = json + anaglogRead(pressureSensors[i]);
+
+        if(i != pressureSensors.length - 1){
+            json += ",";
+        }
+
+    }
+
+    json += "]";
+
+    return json;
+
+}
+
+/**
  * Send data to the server using web socket protocol
  * */
 void sendDataWS(){
 
-    String json;
-
-    if (hasFlag()) {
-        json = "{\"id\": 1, \"state\": true}";
-    } else {
-        json = "{\"id\": 1, \"state\": false}";
-    }
+    String json = "{}";
 
     log("Sending the state");
 
