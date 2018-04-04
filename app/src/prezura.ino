@@ -28,8 +28,8 @@ int request_interval = 5000;
 /**
  * Wifi network configuration
  * */
-const char *ssid = "";
-const char *password = "";
+const char *ssid = ""; // Network SSID Here
+const char *password = ""; // Network Password Here
 
 /**
  * Backend host details
@@ -89,6 +89,8 @@ void loop() {
 
 /**
  * Connecting to the wifi network
+ * Trying to connect to the wifi network with a 500ms
+ * interval
  * */
 void connectWifi() {
 
@@ -103,7 +105,11 @@ void connectWifi() {
 }
 
 /**
- * Initializing the socket connection with the host
+ * Initializing the web socket connection with the host
+ *
+ * Security: This websocket connection will use plain websocket
+ * protocol ws to communicate with the server, using wss will
+ * be more secure
  * */
 void connectWebSocket(){
 
@@ -190,6 +196,8 @@ void sendState(){
 
 /**
  * Prepare pressure sensors analog voltage read as a JSON array
+ *
+ * @return a json string contain voltage reads of pressure sensors
  * */
 String prepareData() {
 
@@ -216,7 +224,7 @@ String prepareData() {
  * */
 void sendDataWS(){
 
-    String json = "{}";
+    String json = prepareData();
 
     log("Sending the state");
 
@@ -242,14 +250,9 @@ void sendDataWS(){
 }
 
 /**
- * Send data to the server using HTTP protocol
- *
- * TODO implement
+ * Log required information to the serial port
+ * for testing purposes
  * */
-void sendDataHTTP(){
-
-}
-
 void log(String message){
     Serial.println(message);
 }
